@@ -1,0 +1,20 @@
+module multiply (
+
+    
+    // inputs
+    input alufn_signal[6],
+    input a[8],
+    input b[8],
+    //outputs
+    output out[8]
+  ) {
+
+  always {
+    out = 0;
+    
+    case(alufn_signal[1:0]) {
+    b00: out = a*b;
+    b01: out = a/b;
+    }
+  }
+}

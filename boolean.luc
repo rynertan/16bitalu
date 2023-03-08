@@ -1,21 +1,23 @@
 module boolean (
-    input a[32],
-    input b[32],
+    input a[8],
+    input b[8],
     input alufn_signal[6],
-    output out[32]
+    output out[8]
   ) {
 
-  
   always {
 
-    case(alufn_signal[3:0]){
+    case(alufn_signal[2:0]){
     
-      b1000: out = a & b;
-      b1110: out = a | b;
-      b0110: out = a ^ b;
-      b1010: out = a;
+      b000: out = a & b;
+      b010: out = a | b;
+      b011: out = a ^ b;
+      b100: out = a;
+      b101: out = ~(a&b);
+      b110: out = ~(a^b);
+      b111: out = ~(a|b);
       default:
-        out = 32b0;
+        out = 8b0;
     }
    
   }

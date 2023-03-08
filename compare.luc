@@ -1,22 +1,18 @@
-module boolean (
-    input a[32],
-    input b[32],
+module compare (
+    input z,
+    input v,
+    input n,
     input alufn_signal[6],
-    output out[32]
+    output out[8] 
   ) {
-
   
   always {
-
-    case(alufn_signal[3:0]){
-    
-      b1000: out = a & b;
-      b1110: out = a | b;
-      b0110: out = a ^ b;
-      b1010: out = a;
-      default:
-        out = 32b0;
-    }
+    out = 8b0;
+    case (alufn_signal) {
+      default: out[0] = 0;
+      b00: out[0] = z;
+      b01: out[0] = n ^ v;
+      b10: out[0] = z | (n ^ v);
    
   }
 }
