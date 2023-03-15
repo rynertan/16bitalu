@@ -1,0 +1,17 @@
+module compare (
+    input z,                     // zero flag
+    input v,                     // overflow flag
+    input n,                     // negative flag
+    input alufn_signal[6],       // ALU control signal
+    output out[16]               // output
+  ) {
+  
+  always {
+    out = 16b0;                  // set the output to 0
+    case (alufn_signal[2:0]) {   // select an operation based on the ALU control signal
+      default: out[0] = 0;       // default to 0
+      b000: out[0] = z;          // set output to 1 if z flag is set
+      b001: out[0] = n ^ v;      // set output to 1 if n and v flags are different
+      b010: out[0] = z | (n ^ v);// set output to 1 if z flag is set or n and v flags are different
+  }
+}

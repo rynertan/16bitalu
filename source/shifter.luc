@@ -1,0 +1,16 @@
+module shifter (
+    input a[16],  // 16-bit input A
+    input b[4],   // 4-bit input B
+    input alufn_signal[6],  // 6-bit ALU function input
+    output out[16]  // 16-bit output
+  ) {
+
+  always {
+  case (alufn_signal[2:0]){  // Select the case based on bits 2 to 0 of ALU function input
+    default: out = a;  // Default case - output A as is
+    b000: out = a << b;  // Shift left A by B bits
+    b001: out = a >> b;  // Shift right A by B bits
+    b111: out = $signed(a) >>> b;  // Arithmetic shift right A by B bits (sign-extended)
+    }
+  }
+}

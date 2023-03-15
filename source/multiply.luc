@@ -1,0 +1,23 @@
+// This module performs multiplication and division operations
+
+module multiply (
+
+    // inputs
+    input alufn_signal[6], // the control signal that selects the operation
+    input a[16], // the first operand
+    input b[16], // the second operand
+    //outputs
+    output out[16] // the result of the operation
+    
+) {
+
+    always {
+        out = 0;
+        
+        // perform multiplication or division depending on the value of the control signal
+        case(alufn_signal[2:0]) {
+        b000: out = a*b; // multiplication
+        b111: out = a/b; // division
+        }
+    }
+}

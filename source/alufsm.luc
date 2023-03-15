@@ -1,0 +1,86 @@
+// This is a module for an ALU finite state machine
+
+module alufsm (
+input clk, // clock
+input rst, // reset
+input a[16], // input a
+input b[16], // input b
+input button[5], // buttons for input control
+input alufn_signal[6], // signal for ALU operation
+output out[16], // output value
+output zvn[3] // zero, overflow, negative flag signals
+) {
+
+// Declare and initialize four D flip-flops
+dff i_result[16](#INIT(0), .clk(clk), .rst(rst));
+dff j_result[16](#INIT(0), .clk(clk), .rst(rst));
+dff k_result[6](#INIT(0), .clk(clk), .rst(rst));
+//dff t_result[1](#INIT(0), .clk(clk), .rst(rst));
+
+// Declare a finite state machine for input control
+fsm input_controller(.clk(clk), .rst(rst)) = {ALUFN,A1,B1,RESET};
+
+// Declare an ALU module
+alu alu;
+
+always {
+    // FSM for input control
+    case (input_controller.q){
+      
+        input_controller.ALUFN:
+        // Check if button 1 is pressed to set the ALU function signal
+        if (button[1]){
+          k_result.d = alufn_signal;
+          input_controller.d = input_controller.A1;
+        }
+        else {
+          input_controller.d = input_controller.ALUFN;
+        } 
+    
+        input_controller.A1:
+        // Check if button 1 is pressed to set input A
+        if (button[1]){
+          i_result.d = a;
+          input_controller.d = input_controller.B1;         
+        }
+        else {
+          input_controller.d = input_controller.A1;
+        }
+    
+        
+        input_controller.B1:
+        // Check if button 1 is pressed to set input B
+        if (button[1]){
+          j_result.d = b;
+          input_controller.d = input_controller.RESET;
+        }
+        else {
+          input_controller.d = input_controller.B1;
+        }
+     
+     
+        input_controller.RESET:
+        // Check if button 4 is pressed to reset all inputs and return to ALUFN state
+        if (button[4]){
+          i_result.d = 16b0;
+          j_result.d = 16b0;
+          k_result.d = 6b0;
+          //t_result.d = b0;
+          input_controller.d = input_controller.ALUFN;
+        }
+        else{
+          input_controller.d = input_controller.RESET;
+        }
+    }
+    
+    // Assign input values to ALU module
+    alu.a = i_result.q;
+    alu.b = j_result.q;
+    alu.alufn_signal = k_result.q; 
+    //alu.cin = t_result.q;
+    
+    // Assign output values from ALU module
+    out = alu.out;
+    zvn = alu.zvn;
+  }
+}

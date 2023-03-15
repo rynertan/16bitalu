@@ -1,0 +1,36 @@
+// This module implements boolean operations between two 16-bit inputs a and b based on a 3-bit ALU function code alufn_signal.
+// The output out is also a 16-bit value representing the result of the boolean operation.
+// The ALU function codes are defined as follows:
+// b000: bitwise AND operation
+// b010: bitwise OR operation
+// b011: bitwise XOR operation
+// b100: output a
+// b101: bitwise NAND operation
+// b110: bitwise XNOR operation
+// b111: bitwise NOR operation
+// The default case sets the output to zero.
+
+module boolean (
+    input a[16],
+    input b[16],
+    input alufn_signal[6],
+    output out[16]
+  ) {
+
+  always {
+
+    case(alufn_signal[2:0]){
+    
+      b000: out = a & b;
+      b010: out = a | b;
+      b011: out = a ^ b;
+      b100: out = a;
+      b101: out = ~(a&b);
+      b110: out = ~(a^b);
+      b111: out = ~(a|b);
+      default:
+        out = 16b0;
+    }
+   
+  }
+}

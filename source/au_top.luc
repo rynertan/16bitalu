@@ -1,0 +1,101 @@
+module au_top (
+    input clk,              // 100MHz clock
+    input rst_n,            // reset button (active low)
+    output led [8],         // 8 user controllable LEDs
+    input usb_rx,           // USB->Serial input
+    output usb_tx,          // USB->Serial output
+    output io_led [3][8],   // LEDs on IO Shield
+    output io_seg [8],      // 7-segment LEDs on IO Shield
+    output io_sel [4],      // Digit select on IO Shield
+    input io_button [5],    // 5 buttons on IO Shield
+    input io_dip [3][8]
+   ) {
+  sig rst; // reset signal
+  button_conditioner buttoncond[5](.clk(clk));
+  edge_detector buttondetector[5](#RISE(1), #FALL(0),.clk(clk)); //detect on rising edge only
+  alufsm alu(.clk(clk),.rst(rst));
+  auto_test autotest(.clk(clk),.rst(rst));
+  fsm tester(.clk(clk),.rst(rst)) = {START, MANUAL, AUTO}; //fsm here
+
+
+  .clk(clk) {
+    // The reset conditioner is used to synchronize the reset signal to the FPGA
+    // clock. This ensures the entire FPGA comes out of reset at the same time.
+    reset_conditioner reset_cond;
+  }
+  
+  always {
+    reset_cond.in = ~rst_n; // input raw inverted reset signal
+    rst = reset_cond.out;   // conditioned reset
+    
+    usb_tx = usb_rx;        // loop serial port
+    
+    led = 8h00;             // turn LEDs off
+    
+    io_led = 3x{{8h00}};    // turn LEDs off set 3 sets of 8-bit values represented in hex h as 0
+    io_seg = 8hff;          // turn segments off
+    io_sel = 4hf;           // select no digits
+
+////////////////////////////////////////////////////////////////////
+                             //connecting my inputs here//
+    
+    /* ALUFSM INPUTS HERE */
+    //connecting manual input
+    alu.a[7:0] = io_dip[0];
+    alu.a[15:8] = io_dip[1]; //a
+    alu.b[7:0] = io_dip[0]; //b
+    alu.b[15:8] = io_dip[1]; 
+    alu.alufn_signal = io_dip[2][5:0];//alufn_signal
+    
+    buttoncond.in = io_button[4:0];           //io_button[1] and [4]for ALUFSM
+    buttondetector.in = buttoncond.out;
+    
+    alu.button[1] = buttondetector.out[1]; //alu button
+    alu.button[4] = buttondetector.out[4];
+    //alu.button  = io_button[1]; essentially
+    
+    /* AUTOTEST INPUTS HERE */
+    //connecting auto input
+    //buttoncond.in = io_button[0];          //io_button[0] for AUTOTEST
+    //buttondetector.in = buttoncond.out;
+    autotest.io_button = buttondetector.out[0];
+    //autotest.io_button = io_button[0]; essentially
+    autotest.a = io_dip[0];
+    autotest.b = io_dip[1];
+    autotest.alufn_signal = io_dip[2][5:0];
+    
+    
+    case(tester.q){
+      tester.START:
+        io_led[0] = 1; //turn on LEDs to show START
+        io_led[1] = 1;
+        io_led[2] = 1;
+        if(buttondetector.out[2]){
+          tester.d = tester.MANUAL;
+        }
+      tester.MANUAL:
+        io_led[0] = alu.out[7:0]; //16b first half
+        io_led[1] = alu.out[15:8]; //16b second half
+        io_led[2][7:5] = alu.zvn; //zvn
+        if(buttondetector.out[2]){
+          tester.d = tester.AUTO;
+        }
+      tester.AUTO:
+        io_led[1] = autotest.out[7:0];
+        io_led[2] = autotest.out[15:8];
+        if(buttondetector.out[2]){
+          tester.d = tester.START;
+        }
+    }
+    /* ALUFSM OUTPUTS HERE 
+    io_led[0] = alu.out[7:0];        //segments 0 and 1 for alu.out
+    io_led[1] = alu.out[15:8];*/
+    io_led[2][4:0] = io_button[4:0]; //shows on LED which buttons are pressed
+    //io_led[2][7:5] = alu.zvn; //zvn 
+    
+    
+        
+    /* AUTOTEST OUTPUTS 
+    io_led[2:0] = autotest.io_led;*/
+    }
+}
